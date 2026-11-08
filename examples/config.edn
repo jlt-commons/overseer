@@ -1,0 +1,22 @@
+;; Example overseer config. Copy to ~/.config/overseer/config.edn and edit.
+;;
+;; Precedence, per key: CLI flag > environment variable > this file > default.
+
+{:data "/Users/yogthos/src/jlt-commons/lev/data"   ; the prepared Lev data root (jolt prepare)
+ :thinkers {}                                      ; {:name {:model "x.gguf" ...}} generative models
+ :default-model "english"                          ; english | multilingual | typed-decisions | a thinker
+ :max-loaded 1
+ :max-thinkers 1
+
+ :port 8080
+ :host "127.0.0.1"
+ :api-key nil                                      ; set a string to require a bearer token
+
+ ;; Audio transcription: a shell command that takes the recorded wav at a
+ ;; trailing :file and prints the transcript. Without it, the microphone /
+ ;; screen-audio / all-audio sensors answer nil.
+ :audio {:transcribe ["whisper-cli" "-m" "ggml-base.en.bin" "-f" :file]}
+
+ ;; Agents defined in config (their :code is a symbol, resolved on first run):
+ ;; :agents {"my-agent" {:prompt "..." :decision {...} :sensors [...] :code my.plugin/handle}}
+ :agents {}}

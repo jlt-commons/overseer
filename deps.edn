@@ -1,0 +1,31 @@
+{:paths ["src"]
+
+ :deps {io.github.jlt-commons/lev {:local/root "/Users/yogthos/src/jlt-commons/lev"}
+        org.clojure/data.json {:mvn/version "2.5.1"}
+        jolt-lang/ring-chez-adapter {:git/url "https://github.com/jolt-lang/ring-chez-adapter"
+                                     :git/tag "v0.7.14"
+                                     :git/sha "d29d8add671f66e4223567fb60e53a975ecce23e"}
+        askonomm/ruuter {:git/url "https://git.nmm.ee/asko/ruuter.git"
+                         :git/tag "v2.1.1"
+                         :git/sha "263f868cf19e73ccda7cda6b4d4af1d8fe504749"}}
+
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {io.github.jlt-commons/writ
+                      {:git/url "https://github.com/jlt-commons/writ"
+                       :git/sha "11ea31dfd4f261332df3b227c37c962e30eefb4e"}}
+         :main-opts ["-e" "(require 'overseer.test-runner) (overseer.test-runner/-main)"]}
+
+  :metrics {:extra-deps {io.github.jlt-commons/jolt-metrics
+                         {:git/url "https://github.com/jlt-commons/jolt-metrics"
+                          :git/tag "v0.2.0"
+                          :git/sha "ac09e6405711c40e021ff29ee1fa59e93d88352a"}}
+            :main-opts ["-m" "metrics.cli"]}}
+
+ :tasks
+ {test {:doc "run the clojure.test suite"
+        :task (jolt "-M:test")}
+  metrics {:doc "jolt-metrics report over src/"
+           :task (jolt "-M:metrics" "src")}
+  binary {:doc "build the standalone overseer binary"
+          :task "jolt build -m overseer.core -o overseer"}}}}

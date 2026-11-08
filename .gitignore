@@ -1,0 +1,8 @@
+/overseer
+/overseer.build/
+/.jolt/
+/.cpcache/
+/.lsp/
+/.writ-cache/
+target/
+.clj-kondo
