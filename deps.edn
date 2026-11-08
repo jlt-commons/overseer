@@ -1,10 +1,12 @@
 {:paths ["src"]
 
- :deps {io.github.jlt-commons/lev {:local/root "/Users/yogthos/src/jlt-commons/lev"}
+ :deps {io.github.jlt-commons/lev {:git/url "https://github.com/jlt-commons/lev"
+                                   :git/tag "v0.3.4"
+                                   :git/sha "e68e5caddb4a07ef01d1c53fe33679a6a09ff720"}
         org.clojure/data.json {:mvn/version "2.5.1"}
         jolt-lang/ring-chez-adapter {:git/url "https://github.com/jolt-lang/ring-chez-adapter"
-                                     :git/tag "v0.7.14"
-                                     :git/sha "d29d8add671f66e4223567fb60e53a975ecce23e"}
+                                     :git/tag "v0.9.0"
+                                     :git/sha "c2c2462ab10503c4927d4bbf03e72a29ea7aa531"}
         askonomm/ruuter {:git/url "https://git.nmm.ee/asko/ruuter.git"
                          :git/tag "v2.1.1"
                          :git/sha "263f868cf19e73ccda7cda6b4d4af1d8fe504749"}}
@@ -28,4 +30,4 @@
   metrics {:doc "jolt-metrics report over src/"
            :task (jolt "-M:metrics" "src")}
   binary {:doc "build the standalone overseer binary"
-          :task "jolt build -m overseer.core -o overseer"}}}}
+          :task "jolt build -m overseer.core -o overseer"}}}
