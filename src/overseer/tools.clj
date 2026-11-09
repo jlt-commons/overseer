@@ -1,6 +1,7 @@
 (ns overseer.tools
   "The built-in tools: memory, agent control, time, notifications, sound,
-  and a guarded shell exec.
+  a shell exec, and the messaging tools in overseer.notify (Discord,
+  Telegram, Pushover, ntfy, webhook).
 
   Tools receive the running `system` (see overseer.tool) and any args; the
   memory tools read the store at (:store system) and default to the
@@ -8,6 +9,7 @@
   optional `agentId` argument."
   (:require [clojure.java.shell :refer [sh]]
             [overseer.memory :as mem]
+            [overseer.notify :as notify]
             [overseer.tool :as tool]))
 
 (def ^:private mac? (some? (re-find #"^Mac" (System/getProperty "os.name"))))
@@ -46,13 +48,13 @@
 
 ;; --- agents ------------------------------------------------------------------------
 
-(defn start-agent [system agent-id]
+(defn start-agent [system & [agent-id]]
   (let [h (agents-handle system)]
-    ((:start h) (keyword agent-id))))
+    ((:start h) (keyword (name (current-agent system agent-id))))))
 
-(defn stop-agent [system agent-id]
+(defn stop-agent [system & [agent-id]]
   (let [h (agents-handle system)]
-    ((:stop h) (keyword agent-id))))
+    ((:stop h) (keyword (name (current-agent system agent-id))))))
 
 ;; --- time / sleep -------------------------------------------------------------------
 
@@ -65,8 +67,7 @@
 (defn notify* [_system title body]
   (let [t (str title) b (str body)]
     (if mac?
-      (run! #(sh "osascript" "-e" (str "display notification " (pr-str b) " with title " (pr-str t)))
-            [nil])
+      (sh "osascript" "-e" (str "display notification " (pr-str b) " with title " (pr-str t)))
       (sh "notify-send" t b))
     nil))
 
@@ -79,7 +80,7 @@
 ;; --- exec ---------------------------------------------------------------------------
 
 (defn exec* [_system cmd & args]
-  (let [r (apply sh cmd args)]
+  (let [r (apply sh (str cmd) (map str args))]
     {:exit (:exit r) :out (:out r) :err (:err r)}))
 
 ;; --- the built-ins -------------------------------------------------------------------
@@ -93,15 +94,20 @@
    :get-image-memory  {:name "get-image-memory" :doc "Read an agent's stored images" :fn get-image-memory}
    :set-image-memory  {:name "set-image-memory" :doc "Replace an agent's stored images" :fn set-image-memory}
    :append-image-memory {:name "append-image-memory" :doc "Append to an agent's stored images" :fn append-image-memory}
-   :start-agent       {:name "start-agent" :doc "Start a registered agent" :fn start-agent}
-   :stop-agent        {:name "stop-agent" :doc "Stop a registered agent" :fn stop-agent}
+   :start-agent       {:name "start-agent" :doc "Start a registered agent (optional agentId)" :fn start-agent}
+   :stop-agent        {:name "stop-agent" :doc "Stop a registered agent (optional agentId)" :fn stop-agent}
    :time              {:name "time" :doc "The current time" :fn (fn [_] (time*))}
    :sleep             {:name "sleep" :doc "Sleep for a number of milliseconds" :fn (fn [_ ms] (sleep* ms))}
    :notify            {:name "notify" :doc "A desktop notification" :fn notify*}
    :sound             {:name "sound" :doc "Play a local sound" :fn sound*}
    :exec              {:name "exec" :doc "Run a shell command" :fn exec*}})
 
+(defn all-builtins
+  "The built-ins plus the messaging tools (overseer.notify)."
+  []
+  (merge (builtins) (notify/builtins)))
+
 (defn register!
   "Install the built-ins into a registry (the global one by default)."
   ([] (register! tool/registry))
-  ([reg] (doseq [[_ t] (builtins)] (tool/register! reg t)) reg))
+  ([reg] (doseq [[_ t] (all-builtins)] (tool/register! reg t)) reg))

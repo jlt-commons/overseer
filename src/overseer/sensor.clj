@@ -101,11 +101,13 @@
   "Substitute `$SENSOR` placeholders in `text` using the captured `values`
   ({sensor-id -> value}). Memory placeholders carry an @agent_id suffix;
   `memory` is the store (see overseer.memory) and `agent-id` the current
-  agent, the default for a bare `$MEMORY` / `$IMEMORY`."
+  agent, the default for a bare `$MEMORY` / `$IMEMORY`. A placeholder
+  that names no captured sensor (e.g. `$HOME` in a shell snippet) is left
+  untouched."
   [text values {:keys [memory agent-id]}]
   (let [memory (or memory {})]
     (str/replace text placeholder-re
-                 (fn [[_ placeholder at]]
+                 (fn [[match placeholder at]]
                    (let [id (sensor-id-of placeholder)
                          at-id (when at (subs at 1))]
                      (cond
@@ -121,5 +123,8 @@
                        (= :imemory id)
                        (render-value (mem/image-memory memory agent-id))
 
-                       :else
-                       (render-value (get values id))))))))
+                       (contains? values id)
+                       (render-value (get values id))
+
+                       ;; not a sensor this pass captured: leave the text as is
+                       :else match))))))

@@ -99,7 +99,7 @@
   [rt]
   (let [predict (if (router/router? rt)
                   (fn [state questions opts] (apply router/predict rt state questions (mapcat identity opts)))
-                  (fn [state questions opts] (apply ag/system-one rt state questions (mapcat identity opts))))]
+                  (fn [state questions opts] (ag/system-one rt state questions opts)))]
     (fn engine
       ([state questions] (predict state questions {}))
       ([state questions opts] (predict state questions opts)))))
