@@ -51,3 +51,8 @@
            (sensor/render "see $SCREEN and $MEMORY"
                           {:screen {:type :image :mime "image/png" :path "/s.png"}}
                           {:memory store :agent-id :a})))))
+
+(deftest render-leaves-unknown-placeholders-test
+  (is (= "echo $HOME and x" (sensor/render "echo $HOME and $CLIPBOARD" {:clipboard "x"} {})))
+  ;; a captured sensor that answered nil renders empty
+  (is (= "clip: " (sensor/render "clip: $CLIPBOARD" {:clipboard nil} {}))))

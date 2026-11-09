@@ -17,6 +17,12 @@
  ;; screen-audio / all-audio sensors answer nil.
  :audio {:transcribe ["whisper-cli" "-m" "ggml-base.en.bin" "-f" :file]}
 
+ ;; Messaging tools (send-telegram, send-pushover, send-ntfy). Discord and
+ ;; webhook take their URL as an argument.
+ ;; :telegram {:token "123456:ABC..."}
+ ;; :pushover {:token "your-app-token"}
+ ;; :ntfy {:server "https://ntfy.sh" :token nil}
+
  ;; Agents defined in config (their :code is a symbol, resolved on first run):
  ;; :agents {"my-agent" {:prompt "..." :decision {...} :sensors [...] :code my.plugin/handle}}
  :agents {}}

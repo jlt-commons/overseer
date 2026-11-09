@@ -4,12 +4,43 @@
   so a plugin can substitute a persistent implementation.
 
   Backs the `$MEMORY` / `$MEMORY@agent_id` and `$IMEMORY` /
-  `$IMEMORY@agent_id` sensors, and the get/set/append-memory tools.")
+  `$IMEMORY@agent_id` sensors, and the get/set/append-memory tools.
+
+  `file-store` is an atom that loads from and saves to an EDN file, so
+  memory survives a restart."
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]))
 
 (defn make-store
   "A fresh in-memory store: {agent-id {:memory \"\" :imemory [...]}}."
   []
   (atom {}))
+
+(defn file-store
+  "A store kept in the EDN file at `path`: loaded now (an unreadable file
+  starts empty, and is left in place), written after every change."
+  [path]
+  (let [f (io/file path)
+        init (try (when (.exists f)
+                    (let [m (edn/read-string (slurp f))] (when (map? m) m)))
+                  (catch Exception e
+                    (binding [*out* *err*]
+                      (println "overseer: cannot read memory" (str f) "-" (ex-message e)))
+                    nil))
+        store (atom (or init {}))
+        lock (Object.)]
+    (add-watch store ::persist
+               (fn [_ _ old new]
+                 (when-not (= old new)
+                   (locking lock
+                     (try (some-> (.getParentFile f) .mkdirs)
+                          (let [tmp (io/file (str path ".tmp"))]
+                            (spit tmp (pr-str @store))
+                            (.renameTo tmp f))
+                          (catch Exception e
+                            (binding [*out* *err*]
+                              (println "overseer: cannot save memory" (str f) "-" (ex-message e)))))))))
+    store))
 
 (defn- k [agent-id] (if (keyword? agent-id) agent-id (keyword (str agent-id))))
 
@@ -48,6 +79,12 @@
   "Append `imgs` to the image memory for `agent-id`; returns the store."
   [store agent-id imgs]
   (swap! store update-in [(k agent-id) :imemory] (fnil into []) imgs)
+  store)
+
+(defn delete!
+  "Forget the text and image memory of `agent-id`; returns the store."
+  [store agent-id]
+  (swap! store dissoc (k agent-id))
   store)
 
 (defn agents

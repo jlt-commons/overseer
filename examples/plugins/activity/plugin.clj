@@ -4,8 +4,11 @@
 
   Copy this directory to ~/.config/overseer/plugins/ and it loads when
   overseer starts."
-  (:require [clojure.string :as str]
-            [overseer.plugin :as p]))
+  (:require [clojure.java.shell :as shell]
+            [clojure.string :as str]
+            [overseer.config :as config]
+            [overseer.plugin :as p]
+            [overseer.sensor :as sensor]))
 
 ;; --- a custom sensor: disk usage, read from `df` -------------------------------
 
@@ -14,7 +17,7 @@
   :kind :text
   :description "Free disk space on the main volume"
   :capture (fn [_]
-             (let [{:keys [exit out]} (clojure.java.shell/sh "df" "-h" "/")]
+             (let [{:keys [exit out]} (shell/sh "df" "-h" "/")]
                (when (zero? exit)
                  (str/trim (last (str/split-lines out))))))})
 
@@ -24,7 +27,7 @@
  {:name "log"
   :doc "Append a line to ~/.config/overseer/log.txt"
   :fn (fn [system line]
-        (spit (str (overseer.config/config-dir) "/log.txt")
+        (spit (str (config/config-dir) "/log.txt")
               (str line "\n") :append true)
         nil)})
 
@@ -36,8 +39,8 @@
  {:id :clipboard-change
   :kind :text
   :description "The clipboard, only when it changed since the last capture"
-  :capture (fn [_]
-             (let [v (overseer.sensor/capture :clipboard {})]
+  :capture (fn [ctx]
+             (let [v (sensor/capture :clipboard ctx)]
                (when (and (seq v) (not= v @last-clipboard))
                  (reset! last-clipboard v)
                  v)))})
@@ -46,14 +49,16 @@
  {:id :activity-tracker
   :name "Activity Tracker"
   :description "Records clipboard activity to memory"
+  ;; $CLIPBOARD_CHANGE is the :clipboard-change sensor registered above: a prompt's
+  ;; placeholders are what the agent captures each pass
   :prompt (str "You watch the user's clipboard.\n"
-               "Clipboard now: $CLIPBOARD\n"
+               "Clipboard now: $CLIPBOARD_CHANGE\n"
                "Previous notes:\n$MEMORY\n\n"
                "Is there new activity worth recording?")
-  :sensors [:clipboard-change]
   :decision {:type :noul :instructions "Is there new activity worth recording?" :threshold 0.5}
   :interval-ms 15000
   :code (fn [ctx]
-          (when (and (:act? ctx) (seq (:clipboard ctx)))
-            ((:call ctx) "append-memory"
-             (str "[" ((:call ctx) "time") "] " (:clipboard ctx)))))})
+          (let [clip (get-in ctx [:captured :clipboard-change])]
+            (when (and (:act? ctx) (seq clip))
+              ((:call ctx) "append-memory"
+               (str "[" ((:call ctx) "time") "] " clip "\n")))))})
