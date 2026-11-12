@@ -273,3 +273,7 @@ needs only the prepared `data/` dir and the OS libs the HTTP adapter uses (zlib,
 OpenSSL). Tests never load a model: the agent loop is exercised against a fake
 engine.
 
+
+## License
+
+EPL 2.0, the same license as Jolt and Clojure. See [LICENSE](LICENSE).
