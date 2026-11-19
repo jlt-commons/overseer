@@ -23,8 +23,8 @@
 
   :metrics {:extra-deps {io.github.jlt-commons/jolt-metrics
                          {:git/url "https://github.com/jlt-commons/jolt-metrics"
-                          :git/tag "v0.2.0"
-                          :git/sha "ac09e6405711c40e021ff29ee1fa59e93d88352a"}}
+                          :git/tag "v0.7.1"
+                          :git/sha "d134ab131364170c1b3171443e848f13e6db7638"}}
             :main-opts ["-m" "metrics.cli"]}}
 
  :tasks
